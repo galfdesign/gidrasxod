@@ -247,6 +247,12 @@
     input[type="range"]:active::-moz-range-thumb {
       background: var(--main-blue-hover);
     }
+    .units-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 7px;
+    }
     .results-block {
       margin-top: 18px;
       background: var(--result-bg);
@@ -347,7 +353,14 @@
         </div>
       </div>
       <div class="form-group" id="group-flow" style="display:none;">
-        <label for="flow">Расход жидкости G, м³/ч</label>
+        <div class="units-row">
+          <label for="flow" style="margin-bottom:0;">Расход жидкости G</label>
+          <select id="flowUnit" style="width:auto;max-width:120px;">
+            <option value="m3h">м³/час</option>
+            <option value="lmin">л/мин</option>
+            <option value="lsec">л/сек</option>
+          </select>
+        </div>
         <input type="number" id="flowNum" step="any" value="1">
         <div class="slider-block">
           <input type="range" id="flow" min="0.1" max="10" step="0.01" value="1">
@@ -387,6 +400,7 @@
     const powerNum = document.getElementById('powerNum');
     const flowSlider = document.getElementById('flow');
     const flowNum = document.getElementById('flowNum');
+    const flowUnit = document.getElementById('flowUnit');
     const deltaTempSlider = document.getElementById('deltaTemp');
     const deltaTempNum = document.getElementById('deltaTempNum');
     const resultM3 = document.getElementById('result-m3');
@@ -419,6 +433,38 @@
     };
 
     let calcMode = 'flow'; // flow: расход по мощности, power: мощность по расходу
+
+    // Единицы расхода
+    const flowUnits = {
+      m3h: {
+        name: 'м³/час',
+        toM3h: (val) => val,
+        fromM3h: (val) => val,
+        min: 0.1,
+        max: 10,
+        step: 0.01,
+        default: 1
+      },
+      lmin: {
+        name: 'л/мин',
+        toM3h: (val) => val * 0.06,
+        fromM3h: (val) => val / 0.06,
+        min: 1,
+        max: 200,
+        step: 0.1,
+        default: 60
+      },
+      lsec: {
+        name: 'л/сек',
+        toM3h: (val) => val * 3.6,
+        fromM3h: (val) => val / 3.6,
+        min: 0.2,
+        max: 20,
+        step: 0.01,
+        default: 1
+      }
+    };
+    let currentFlowUnit = 'm3h';
 
     function formatNumber(num) {
       return num.toLocaleString('ru-RU', {
@@ -456,12 +502,14 @@
         resultLMin.textContent = formatNumber(flowRateLMin);
         resultLSec.textContent = formatNumber(flowRateLSec);
       } else {
-        let flow = parseFloat(flowNum.value.replace(",", "."));
-        if (isNaN(flow) || isNaN(deltaTemp)) {
+        let flowVal = parseFloat(flowNum.value.replace(",", "."));
+        if (isNaN(flowVal) || isNaN(deltaTemp)) {
           resultPower.textContent = '-';
           return;
         }
-        const Q = flow * coefficient * deltaTemp;
+        // Преобразуем в м³/ч для формулы
+        let flowM3h = flowUnits[currentFlowUnit].toM3h(flowVal);
+        const Q = flowM3h * coefficient * deltaTemp;
         resultPower.textContent = formatNumber(Q);
       }
     }
@@ -494,10 +542,6 @@
         calculate();
       }
     }
-
-    // Event listeners для переключателя
-    modeFlowBtn.addEventListener('click', () => switchMode('flow'));
-    modePowerBtn.addEventListener('click', () => switchMode('power'));
 
     // Power: slider <-> number
     powerSlider.addEventListener('input', () => {
@@ -551,17 +595,59 @@
     infoBtn.addEventListener('mouseleave', () => {
       tooltip.classList.remove('active');
     });
-    // Закрытие tooltip при клике вне
     document.addEventListener('click', (e) => {
       if (!tooltip.contains(e.target) && !infoBtn.contains(e.target)) {
         tooltip.classList.remove('active');
       }
     });
 
-    // Первый запуск
-    updateFormula();
-    calculate();
+    // --- Единицы расхода в режиме мощности ---
+    function updateFlowUnitUI() {
+      const unitObj = flowUnits[currentFlowUnit];
+      flowNum.min = unitObj.min;
+      flowNum.max = unitObj.max;
+      flowNum.step = unitObj.step;
+      flowSlider.min = unitObj.min;
+      flowSlider.max = unitObj.max;
+      flowSlider.step = unitObj.step;
+      // Обновить значения в новых единицах:
+      let prevVal = parseFloat(flowNum.value.replace(",", "."));
+      if (isNaN(prevVal)) prevVal = unitObj.default;
+      // Преобразовать старое значение к новой системе (через м³/ч)
+      let m3hVal;
+      // Если меняем единицы — конвертируем через старую систему
+      for (let key in flowUnits) {
+        if (flowUnit.options[flowUnit.selectedIndex].value === key) continue;
+        if (flowUnit.options[flowUnit.selectedIndex].defaultSelected) {
+          m3hVal = prevVal;
+        } else {
+          m3hVal = flowUnits[currentFlowUnit].toM3h(prevVal);
+        }
+        break;
+      }
+      // Устанавливаем значения по умолчанию для новых единиц
+      let newVal = flowUnits[flowUnit.value].fromM3h(m3hVal || unitObj.default);
+      if (newVal < unitObj.min) newVal = unitObj.min;
+      if (newVal > unitObj.max) newVal = unitObj.max;
+      flowNum.value = newVal;
+      flowSlider.value = newVal;
+    }
 
+    flowUnit.addEventListener('change', () => {
+      currentFlowUnit = flowUnit.value;
+      updateFlowUnitUI();
+      calculate();
+    });
+
+    // Toggle mode events
+    modeFlowBtn.addEventListener('click', () => switchMode('flow'));
+    modePowerBtn.addEventListener('click', () => switchMode('power'));
+
+    // Init
+    currentFlowUnit = flowUnit.value;
+    updateFormula();
+    updateFlowUnitUI();
+    calculate();
   </script>
 </body>
 </html>
