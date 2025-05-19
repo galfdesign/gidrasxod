@@ -69,6 +69,8 @@
       text-align: center;
       letter-spacing: 0.02em;
       flex: none;
+      word-break: break-word;
+      max-width: 70vw;
     }
     .info-btn {
       margin-left: 5px;
@@ -78,7 +80,7 @@
       cursor: pointer;
       padding: 0;
       position: relative;
-      font-size: 1.25em;
+      font-size: 1.28em;
       color: var(--main-blue);
       border-radius: 50%;
       width: 32px; height: 32px;
@@ -86,6 +88,7 @@
       align-items: center;
       justify-content: center;
       transition: background 0.13s;
+      z-index: 12;
     }
     .info-btn:hover, .info-btn:focus {
       background: #23304b;
@@ -93,11 +96,12 @@
     .tooltip {
       display: none;
       position: absolute;
-      top: 34px;
-      right: 0;
-      z-index: 10;
+      top: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 11;
       width: 320px;
-      max-width: 92vw;
+      max-width: 95vw;
       background: var(--tooltip-bg);
       border: 1.5px solid var(--tooltip-border);
       color: var(--tooltip-text);
@@ -109,6 +113,7 @@
       text-align: left;
       transition: opacity 0.2s;
       pointer-events: none;
+      word-break: break-word;
     }
     .info-btn:focus + .tooltip,
     .info-btn:hover + .tooltip,
@@ -173,7 +178,7 @@
     }
     input[type="range"] {
       width: 100%;
-      height: 11px;
+      height: 15px;
       accent-color: var(--main-blue);
       background: var(--slider-track);
       border-radius: 6px;
@@ -185,7 +190,7 @@
     }
     input[type="range"]::-webkit-slider-thumb {
       appearance: none;
-      width: 24px; height: 24px;
+      width: 26px; height: 26px;
       border-radius: 50%;
       background: var(--slider-thumb);
       border: none;
@@ -196,7 +201,7 @@
       background: var(--main-blue-hover);
     }
     input[type="range"]::-moz-range-thumb {
-      width: 24px; height: 24px;
+      width: 26px; height: 26px;
       border-radius: 50%;
       background: var(--slider-thumb);
       border: none;
@@ -218,7 +223,7 @@
       justify-content: space-between;
       padding: 8px 0;
       border-bottom: 1px solid #27324c;
-      font-size: 1.1em;
+      font-size: 1.08em;
     }
     .result-row:last-child {
       border-bottom: none;
@@ -232,15 +237,24 @@
       font-weight: 700;
       color: var(--result-value);
     }
-    @media (max-width: 500px) {
-      .container {
-        padding: 0 3vw 25vw 3vw;
-        max-width: 99vw;
-      }
-      .card { padding: 18px 6vw 13px 6vw; }
-      .results-block { padding: 10px 7px 7px 11px; }
-      input[type="range"] { height: 11px;}
-      .tooltip { font-size: 0.97em; width: 98vw; left: 0; right: unset;}
+    @media (max-width: 600px) {
+      body { font-size: 16px; }
+      .container { max-width: 100vw; padding: 0 2vw 18vw 2vw;}
+      .card { padding: 13px 2vw 10px 2vw; }
+      .header-row { gap: 7px; margin-bottom: 19px;}
+      .card-title { font-size: 1.08em; max-width: 66vw;}
+      .tooltip { width: 97vw; min-width: 0; left: 50%; transform: translateX(-50%); font-size: 0.98em; padding: 13px 8vw 13px 8vw;}
+      .form-group { margin-bottom: 13px;}
+      label { font-size: 0.97em; }
+      select, input[type="number"] { font-size: 1em; padding: 9px 10px; }
+      input[type="range"] { height: 13px;}
+      .results-block { padding: 9px 3vw 8px 3vw; }
+    }
+    @media (max-width: 420px) {
+      .tooltip { font-size: 0.95em; padding: 9px 2vw 11px 2vw; }
+      .card-title { font-size: 0.96em; max-width: 60vw;}
+      .header-row { gap: 4px; }
+      .form-group { margin-bottom: 7px;}
     }
   </style>
 </head>
