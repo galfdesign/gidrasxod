@@ -23,6 +23,9 @@
       --result-bg: #21263c;
       --result-label: #98a6c7;
       --result-value: #4cc9f0;
+      --tooltip-bg: #283042;
+      --tooltip-border: #4cc9f0;
+      --tooltip-text: #e0f3fc;
     }
     html, body {
       background: var(--main-bg);
@@ -51,13 +54,82 @@
     .card:hover {
       box-shadow: var(--shadow-hover);
     }
+    .header-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 28px;
+      gap: 10px;
+      position: relative;
+    }
     .card-title {
       font-size: 1.25em;
       font-weight: 700;
       color: var(--main-blue);
-      margin-bottom: 28px;
       text-align: center;
       letter-spacing: 0.02em;
+      flex: none;
+    }
+    .info-btn {
+      margin-left: 5px;
+      background: none;
+      border: none;
+      outline: none;
+      cursor: pointer;
+      padding: 0;
+      position: relative;
+      font-size: 1.25em;
+      color: var(--main-blue);
+      border-radius: 50%;
+      width: 32px; height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.13s;
+    }
+    .info-btn:hover, .info-btn:focus {
+      background: #23304b;
+    }
+    .tooltip {
+      display: none;
+      position: absolute;
+      top: 34px;
+      right: 0;
+      z-index: 10;
+      width: 320px;
+      max-width: 92vw;
+      background: var(--tooltip-bg);
+      border: 1.5px solid var(--tooltip-border);
+      color: var(--tooltip-text);
+      border-radius: 13px;
+      font-size: 0.99em;
+      box-shadow: 0 8px 38px rgba(76,201,240,0.09);
+      padding: 18px 17px 16px 17px;
+      line-height: 1.45;
+      text-align: left;
+      transition: opacity 0.2s;
+      pointer-events: none;
+    }
+    .info-btn:focus + .tooltip,
+    .info-btn:hover + .tooltip,
+    .tooltip.active {
+      display: block;
+      pointer-events: auto;
+    }
+    .tooltip strong {
+      color: #fff;
+    }
+    .tooltip .formula {
+      display: block;
+      font-family: 'Consolas', 'Menlo', 'Monaco', monospace;
+      background: #202532;
+      border-radius: 7px;
+      padding: 7px 12px;
+      margin: 9px 0 11px 0;
+      color: #aaf0ff;
+      font-size: 1.04em;
+      letter-spacing: 0.01em;
+      white-space: pre;
     }
     .form-group {
       margin-bottom: 23px;
@@ -168,13 +240,36 @@
       .card { padding: 18px 6vw 13px 6vw; }
       .results-block { padding: 10px 7px 7px 11px; }
       input[type="range"] { height: 11px;}
+      .tooltip { font-size: 0.97em; width: 98vw; left: 0; right: unset;}
     }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="card">
-      <div class="card-title">Расход жидкости по мощности</div>
+      <div class="header-row">
+        <div class="card-title">Расход жидкости по мощности</div>
+        <button class="info-btn" tabindex="0" aria-label="Пояснение">
+          <span>ℹ️</span>
+        </button>
+        <div class="tooltip" id="tooltip">
+          <strong>Формула расчёта расхода теплоносителя:</strong>
+          <span class="formula">
+G = Q / (C × Δt)
+          </span>
+          <b>G</b> — расход жидкости, м³/ч<br>
+          <b>Q</b> — тепловая мощность, кВт<br>
+          <b>Δt</b> — температурный перепад, °C<br>
+          <b>C</b> — коэффициент теплоёмкости, зависит от типа жидкости (см. список)<br>
+          <br>
+          <b>Примечания:</b>
+          <ul style="margin:0 0 0 20px;padding:0;">
+            <li>Для воды C = 1.163 кВт·ч/(м³·°C)</li>
+            <li>Для гликолей и глицерина C рассчитывается индивидуально</li>
+            <li>В формуле учитывается средняя теплоёмкость для типовых концентраций антифриза</li>
+          </ul>
+        </div>
+      </div>
       <div class="form-group">
         <label for="fluidType">Тип жидкости</label>
         <select id="fluidType">
@@ -229,6 +324,8 @@
     const resultM3 = document.getElementById('result-m3');
     const resultLMin = document.getElementById('result-lmin');
     const resultLSec = document.getElementById('result-lsec');
+    const infoBtn = document.querySelector('.info-btn');
+    const tooltip = document.getElementById('tooltip');
 
     // Коэффициенты (кВт·ч/(м³·°C))
     const fluidCoefficients = {
@@ -302,6 +399,24 @@
     });
 
     fluidTypeSelect.addEventListener('change', calculateFlow);
+
+    // Tooltip: показ при клике и уходе мыши
+    infoBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      tooltip.classList.toggle('active');
+    });
+    infoBtn.addEventListener('mouseenter', () => {
+      tooltip.classList.add('active');
+    });
+    infoBtn.addEventListener('mouseleave', () => {
+      tooltip.classList.remove('active');
+    });
+    // Закрытие tooltip при клике вне
+    document.addEventListener('click', (e) => {
+      if (!tooltip.contains(e.target) && !infoBtn.contains(e.target)) {
+        tooltip.classList.remove('active');
+      }
+    });
 
     // Первый запуск
     calculateFlow();
